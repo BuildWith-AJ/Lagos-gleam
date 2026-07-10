@@ -35,7 +35,7 @@ button {
 /* ---------- ROOT VARIABLES ---------- */
 :root {
   /* Brand Colors */
-  --color-navy: #0F172A;
+  --color-navy: midnightblue;
   --color-white: #FFFFFF;
   --color-emerald: #10B981;
   --color-emerald-dark: #0ea371;
@@ -148,18 +148,24 @@ body {
 
 /* Logo */
 .logo {
+  color: --color-navy;
+  font-size: 20px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .logo-mark {
+  font-size: 800;
+  color: --color-navy;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .mark {
   padding-bottom: 9px;
+  color: white;
 }
 
 .logo-accent {
