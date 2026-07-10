@@ -398,6 +398,27 @@ CleanCo.initFooterYear = function () {
 };
 
 /* ---------------------------------------------------------
+   SCROLL TO TOP BUTTON: appears after scrolling down,
+   smooth-scrolls back to hero on click.
+--------------------------------------------------------- */
+CleanCo.initScrollToTop = function () {
+  const btn = document.getElementById("scroll-top-btn");
+  if (!btn) return;
+
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 400) {
+      btn.classList.add("visible");
+    } else {
+      btn.classList.remove("visible");
+    }
+  });
+
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+};
+
+/* ---------------------------------------------------------
    INIT: run all feature modules once DOM is ready
 --------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
@@ -410,4 +431,5 @@ document.addEventListener("DOMContentLoaded", () => {
   CleanCo.initFaqAccordion();
   CleanCo.initContactForm();
   CleanCo.initFooterYear();
+  CleanCo.initScrollToTop();
 });

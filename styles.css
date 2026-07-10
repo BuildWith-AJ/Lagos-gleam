@@ -2001,6 +2001,53 @@ a.contact-info-text:hover {
   }
 }
 
+/* =========================================================================
+   SCROLL TO TOP BUTTON
+   ========================================================================= */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  width: 46px;
+  height: 46px;
+  background-color: var(--color-navy);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  color: var(--color-white);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity var(--transition-base), transform var(--transition-base), background-color var(--transition-base), visibility var(--transition-base);
+  z-index: 900;
+}
+
+.scroll-top-btn.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.scroll-top-btn:hover {
+  background-color: var(--color-emerald);
+}
+
+.scroll-top-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 480px) {
+  .scroll-top-btn {
+    bottom: 1.25rem;
+    left: 1.25rem;
+    width: 42px;
+    height: 42px;
+  }
+}
+
 /* ---------- TABLET / DESKTOP BREAKPOINT ---------- */
 @media (min-width: 1024px) {
   .nav-links {
