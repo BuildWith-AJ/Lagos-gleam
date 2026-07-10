@@ -149,6 +149,255 @@ CleanCo.initStatCounters = function () {
 };
 
 /* ---------------------------------------------------------
+   GALLERY LIGHTBOX: opens photos/videos in a modal viewer.
+   Videos use preload="none" so they never load until clicked —
+   keeps initial page load fast.
+--------------------------------------------------------- */
+CleanCo.initGalleryLightbox = function () {
+  const galleryItems = document.querySelectorAll(".gallery-item");
+  const lightbox = document.getElementById("lightbox");
+  const lightboxContent = document.getElementById("lightbox-content");
+  const closeBtn = document.getElementById("lightbox-close");
+
+  if (!galleryItems.length || !lightbox || !lightboxContent || !closeBtn) return;
+
+  const openLightbox = (type, src, alt) => {
+    lightboxContent.innerHTML = "";
+
+    if (type === "video") {
+      const video = document.createElement("video");
+      video.src = src;
+      video.controls = true;
+      video.autoplay = true;
+      video.preload = "none";
+      video.setAttribute("aria-label", alt);
+      lightboxContent.appendChild(video);
+    } else {
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = alt;
+      lightboxContent.appendChild(img);
+    }
+
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden"; // prevent background scroll
+  };
+
+  const closeLightbox = () => {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+
+    // Stop video playback when closing
+    const video = lightboxContent.querySelector("video");
+    if (video) {
+      video.pause();
+    }
+    lightboxContent.innerHTML = "";
+  };
+
+  galleryItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const type = item.dataset.type;
+      const src = item.dataset.src;
+      const alt = item.dataset.alt;
+      openLightbox(type, src, alt);
+    });
+  });
+
+  closeBtn.addEventListener("click", closeLightbox);
+
+  // Close when clicking outside content
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) {
+      closeLightbox();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && lightbox.classList.contains("active")) {
+      closeLightbox();
+    }
+  });
+};
+
+/* ---------------------------------------------------------
+   REVIEWS SLIDER: auto-slides through testimonial cards,
+   with manual prev/next arrows and clickable dots.
+   Responsive: shows 1 card (mobile), 2 (tablet), 3 (desktop).
+--------------------------------------------------------- */
+CleanCo.initReviewsSlider = function () {
+  const track = document.getElementById("reviews-track");
+  const prevBtn = document.getElementById("review-prev");
+  const nextBtn = document.getElementById("review-next");
+  const dotsWrap = document.getElementById("slider-dots");
+
+  if (!track || !prevBtn || !nextBtn || !dotsWrap) return;
+
+  const cards = Array.from(track.children);
+  if (!cards.length) return;
+
+  let currentIndex = 0;
+  let autoSlideTimer = null;
+
+  // Determine how many cards are visible at once based on viewport width
+  const getVisibleCount = () => {
+    if (window.innerWidth >= 1024) return 3;
+    if (window.innerWidth >= 768) return 2;
+    return 1;
+  };
+
+  const getMaxIndex = () => Math.max(0, cards.length - getVisibleCount());
+
+  const buildDots = () => {
+    dotsWrap.innerHTML = "";
+    const maxIndex = getMaxIndex();
+    for (let i = 0; i <= maxIndex; i++) {
+      const dot = document.createElement("button");
+      dot.classList.add("slider-dot");
+      dot.setAttribute("aria-label", "Go to review slide " + (i + 1));
+      if (i === currentIndex) dot.classList.add("active");
+      dot.addEventListener("click", () => {
+        currentIndex = i;
+        updateSlider();
+        resetAutoSlide();
+      });
+      dotsWrap.appendChild(dot);
+    }
+  };
+
+  const updateSlider = () => {
+    const cardWidth = cards[0].getBoundingClientRect().width;
+    const gap = 20; // matches margin-right in CSS (1.25rem ≈ 20px)
+    const offset = currentIndex * (cardWidth + gap);
+    track.style.transform = `translateX(-${offset}px)`;
+
+    // Update dots
+    const dots = dotsWrap.querySelectorAll(".slider-dot");
+    dots.forEach((dot, i) => dot.classList.toggle("active", i === currentIndex));
+  };
+
+  const goNext = () => {
+    const maxIndex = getMaxIndex();
+    currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
+    updateSlider();
+  };
+
+  const goPrev = () => {
+    const maxIndex = getMaxIndex();
+    currentIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
+    updateSlider();
+  };
+
+  const resetAutoSlide = () => {
+    clearInterval(autoSlideTimer);
+    autoSlideTimer = setInterval(goNext, 5000);
+  };
+
+  nextBtn.addEventListener("click", () => {
+    goNext();
+    resetAutoSlide();
+  });
+
+  prevBtn.addEventListener("click", () => {
+    goPrev();
+    resetAutoSlide();
+  });
+
+  // Rebuild on resize (visible count may change between breakpoints)
+  window.addEventListener("resize", () => {
+    currentIndex = 0;
+    buildDots();
+    updateSlider();
+  });
+
+  // Init
+  buildDots();
+  updateSlider();
+  resetAutoSlide();
+};
+
+/* ---------------------------------------------------------
+   FAQ ACCORDION: smooth expand/collapse, only one open
+   at a time. Uses max-height animation driven by scrollHeight.
+--------------------------------------------------------- */
+CleanCo.initFaqAccordion = function () {
+  const faqItems = document.querySelectorAll(".faq-item");
+  if (!faqItems.length) return;
+
+  faqItems.forEach((item) => {
+    const question = item.querySelector(".faq-question");
+    const answer = item.querySelector(".faq-answer");
+    if (!question || !answer) return;
+
+    question.addEventListener("click", () => {
+      const isOpen = question.getAttribute("aria-expanded") === "true";
+
+      // Close all other items first (accordion behavior — only one open at a time)
+      faqItems.forEach((otherItem) => {
+        const otherQuestion = otherItem.querySelector(".faq-question");
+        const otherAnswer = otherItem.querySelector(".faq-answer");
+        if (otherQuestion && otherAnswer && otherItem !== item) {
+          otherQuestion.setAttribute("aria-expanded", "false");
+          otherAnswer.style.maxHeight = "0px";
+        }
+      });
+
+      // Toggle current item
+      if (isOpen) {
+        question.setAttribute("aria-expanded", "false");
+        answer.style.maxHeight = "0px";
+      } else {
+        question.setAttribute("aria-expanded", "true");
+        answer.style.maxHeight = answer.scrollHeight + "px";
+      }
+    });
+  });
+};
+
+
+/* ---------------------------------------------------------
+   CONTACT FORM: basic front-end validation + success message.
+   NOTE: This does not send emails — it's a demo-ready UI flow.
+   Once a backend or form service (e.g. Formspree, EmailJS) is
+   chosen, replace the fetch/submit logic inside this function.
+--------------------------------------------------------- */
+CleanCo.initContactForm = function () {
+  const form = document.getElementById("contact-form");
+  const note = document.getElementById("form-note");
+  if (!form || !note) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const name = form.name.value.trim();
+    const phone = form.phone.value.trim();
+    const email = form.email.value.trim();
+    const service = form.service.value;
+
+    if (!name || !phone || !email || !service) {
+      note.textContent = "Please fill in all required fields.";
+      note.className = "form-note error";
+      return;
+    }
+
+    // Placeholder success flow — replace with real submission logic later
+    note.textContent = "Thank you! Your request has been received. We'll contact you shortly.";
+    note.className = "form-note success";
+    form.reset();
+  });
+};
+
+/* ---------------------------------------------------------
+   FOOTER YEAR: auto-updates copyright year, no manual edits needed
+--------------------------------------------------------- */
+CleanCo.initFooterYear = function () {
+  const yearSpan = document.getElementById("footer-year");
+  if (!yearSpan) return;
+  yearSpan.textContent = new Date().getFullYear();
+};
+
+/* ---------------------------------------------------------
    INIT: run all feature modules once DOM is ready
 --------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
@@ -156,4 +405,9 @@ document.addEventListener("DOMContentLoaded", () => {
   CleanCo.initMobileMenu();
   CleanCo.initActiveNavHighlight();
   CleanCo.initStatCounters();
+  CleanCo.initGalleryLightbox();
+  CleanCo.initReviewsSlider();
+  CleanCo.initFaqAccordion();
+  CleanCo.initContactForm();
+  CleanCo.initFooterYear();
 });
